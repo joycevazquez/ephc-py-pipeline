@@ -11,7 +11,7 @@ def extract(filepath):
 
     return df
 
-def transform(df):
+def transform(df, urban_threshold, rural_threshold):
 
     # Creating new column based on the first digit of the ESTGEO. Last two digits indicates rural or urban zone of the department.
     # 0 for Asuncion.
@@ -84,13 +84,9 @@ def transform(df):
     # Calculating average income
     avg_income = df_workingage[df_workingage['PEAA'] == '1'].groupby('DPTO_NAMES')['TOTAL_INCOME_BY_FACTOR'].sum() / df_workingage[df_workingage['PEAA'] == '1'].groupby('DPTO_NAMES')['Factor'].sum()
 
-    # Poverty threshold values for urban and rural areas
-    URBAN_POVERTY_THRESHOLD = 897168
-    RURAL_POVERTY_THRESHOLD = 654657
-
     # Creating a mask for urban and rural poverty rows, and then uniting both
-    is_poor_urban_mask = (df_workingage['AREA'] == 1) & (df_workingage['TOTAL_INCOME'] < URBAN_POVERTY_THRESHOLD)
-    is_poor_rural_mask = (df_workingage['AREA'] == 6) & (df_workingage['TOTAL_INCOME'] < RURAL_POVERTY_THRESHOLD)
+    is_poor_urban_mask = (df_workingage['AREA'] == 1) & (df_workingage['TOTAL_INCOME'] < urban_threshold)
+    is_poor_rural_mask = (df_workingage['AREA'] == 6) & (df_workingage['TOTAL_INCOME'] < rural_threshold)
     is_poor_mask = is_poor_rural_mask | is_poor_urban_mask
 
     # Calculating the poverty headcount
@@ -131,10 +127,12 @@ def load(summary):
     connection.close()
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Usage: python pipeline.py <filepath>")
+    if len(sys.argv) < 4:
+        print("Usage: python pipeline.py <filepath> <urban_threshold> <rural_threshold>")
         sys.exit(1)
     filepath = sys.argv[1]
+    urban_threshold = float(sys.argv[2])
+    rural_threshold = float(sys.argv[3])
     df = extract(filepath)
-    summary = transform(df)
+    summary = transform(df, urban_threshold, rural_threshold)
     load(summary)

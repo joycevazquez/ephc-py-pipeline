@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import psycopg2
+import sys
 
 def extract(filepath):
     df = pd.read_csv(filepath, encoding = 'utf-8-sig', sep = ';')
@@ -130,6 +131,10 @@ def load(summary):
     connection.close()
 
 if __name__ == '__main__':
-    df = extract('97657-REG02_EPHC_1er Trim 2025.csv')
+    if len(sys.argv) < 2:
+        print("Usage: python pipeline.py <filepath>")
+        sys.exit(1)
+    filepath = sys.argv[1]
+    df = extract(filepath)
     summary = transform(df)
     load(summary)
